@@ -1,71 +1,125 @@
-# version-updater-comment README
+# Version Updater
 
-This is the README for your extension "version-updater-comment". After writing up a brief description, we recommend including the following sections.
+[![CI](https://github.com/MarvinMDZ/VSCode-Plugin-Version-Updater/actions/workflows/ci.yml/badge.svg)](https://github.com/MarvinMDZ/VSCode-Plugin-Version-Updater/actions/workflows/ci.yml)
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/MarvinMDZ.version-updater-comment)](https://marketplace.visualstudio.com/items?itemName=MarvinMDZ.version-updater-comment)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A VS Code extension to detect and bump semantic version strings in your code comments and files.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Automatic Version Detection**: Scans your files for version strings in comments and code
+- **CodeLens Integration**: Shows inline actions above version strings to quickly bump versions
+- **Syntax Highlighting**: Highlights detected version strings with customizable colors
+- **Multiple Bump Types**: Support for major, minor, and patch version bumps
+- **Batch Updates**: Bump all versions in a file at once
+- **Customizable Patterns**: Configure regex patterns to match your version string format
 
-For example if there is an image subfolder under your extension project workspace:
+### CodeLens Actions
 
-\!\[feature X\]\(images/feature-x.png\)
+When a version is detected, you'll see inline CodeLens buttons above the version string to quickly bump it:
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- `1.2.4` - Bump patch
+- `1.3.0` - Bump minor
+- `2.0.0` - Bump major
 
-## Requirements
+### Version Detection
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+The extension detects versions in various formats:
+
+```javascript
+// @version 1.2.3
+// Version: 1.2.3
+// v1.2.3
+const VERSION = '1.2.3';
+```
+
+## Installation
+
+1. Open VS Code
+2. Press `Ctrl+P` / `Cmd+P`
+3. Type `ext install MarvinMDZ.version-updater-comment`
+4. Press Enter
+
+Or search for "Version Updater" in the Extensions view.
+
+## Usage
+
+### Commands
+
+All commands are available in the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+| Command                                       | Description                              |
+| --------------------------------------------- | ---------------------------------------- |
+| `Version Updater: Bump Patch Version`         | Increment patch version (1.2.3 -> 1.2.4) |
+| `Version Updater: Bump Minor Version`         | Increment minor version (1.2.3 -> 1.3.0) |
+| `Version Updater: Bump Major Version`         | Increment major version (1.2.3 -> 2.0.0) |
+| `Version Updater: Bump All Versions (Patch)`  | Bump all versions in file                |
+| `Version Updater: Scan Document for Versions` | Show all detected versions               |
+| `Version Updater: Refresh Configuration`      | Reload extension settings                |
+
+### Keyboard Shortcuts
+
+| Shortcut                   | Command    |
+| -------------------------- | ---------- |
+| `Ctrl+Alt+P` / `Cmd+Alt+P` | Bump Patch |
+| `Ctrl+Alt+M` / `Cmd+Alt+M` | Bump Minor |
+| `Ctrl+Alt+J` / `Cmd+Alt+J` | Bump Major |
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+Configure the extension in your VS Code settings:
 
-For example:
+| Setting                           | Type      | Default                    | Description                       |
+| --------------------------------- | --------- | -------------------------- | --------------------------------- |
+| `versionUpdater.patterns`         | `array`   | See below                  | Regex patterns to detect versions |
+| `versionUpdater.showCodeLens`     | `boolean` | `true`                     | Show CodeLens actions             |
+| `versionUpdater.showDecorations`  | `boolean` | `true`                     | Highlight version strings         |
+| `versionUpdater.decorationColor`  | `string`  | `rgba(100, 200, 100, 0.3)` | Highlight color                   |
+| `versionUpdater.autoUpdateOnSave` | `boolean` | `false`                    | Auto-bump patch on save           |
 
-This extension contributes the following settings:
+### Default Patterns
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+```json
+[
+  "(?:@version|version:|v|Version)\\s*(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)",
+  "(?:^|\\s)v?(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)(?:\\s|$)"
+]
+```
+
+### Custom Pattern Example
+
+To match only JSDoc `@version` tags:
+
+```json
+{
+  "versionUpdater.patterns": ["@version\\s*(\\d+\\.\\d+\\.\\d+)"]
+}
+```
+
+## Requirements
+
+- VS Code 1.85.0 or higher
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Prerelease versions (e.g., `1.2.3-beta.1`) are detected but the prerelease suffix is removed when bumping
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- Initial release
+- Version detection with customizable patterns
+- CodeLens integration for quick version bumps
+- Syntax highlighting for detected versions
+- Batch version updates
+- Keyboard shortcuts

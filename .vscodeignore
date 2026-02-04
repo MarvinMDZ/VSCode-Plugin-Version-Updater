@@ -1,11 +1,40 @@
+# Source files (only include compiled output)
 .vscode/**
 .vscode-test/**
 src/**
+out/**
+
+# Config files
 .gitignore
-.yarnrc
+.editorconfig
+.prettierrc
+.prettierignore
+.lintstagedrc
+.husky/**
+tsconfig.json
+vitest.config.ts
+eslint.config.mjs
+esbuild.config.mjs
+.vscode-test.mjs
+
+# Documentation (keep README)
+CONTRIBUTING.md
 vsc-extension-quickstart.md
-**/tsconfig.json
-**/eslint.config.mjs
+
+# Development files
 **/*.map
 **/*.ts
-**/.vscode-test.*
+!dist/**/*.js
+
+# CI/CD
+.github/**
+
+# Tests
+coverage/**
+**/*.test.js
+**/*.test.ts
+
+# Other
+node_modules/**
+*.vsix
+.claude/**

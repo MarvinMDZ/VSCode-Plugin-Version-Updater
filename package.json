@@ -1,41 +1,174 @@
 {
   "name": "version-updater-comment",
-  "displayName": "Version-Updater-Comment",
-  "description": "",
-  "version": "0.0.1",
+  "displayName": "Version Updater",
+  "description": "Detect and bump version strings in your code comments and files",
+  "version": "1.0.0",
+  "publisher": "MarvinMDZ",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MarvinMDZ/VSCode-Plugin-Version-Updater"
+  },
+  "license": "MIT",
   "engines": {
-    "vscode": "^1.105.0"
+    "vscode": "^1.85.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Formatters"
   ],
-  "activationEvents": [],
-  "main": "./out/extension.js",
+  "keywords": [
+    "version",
+    "semver",
+    "bump",
+    "updater",
+    "comment"
+  ],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "version-updater-comment.helloWorld",
-        "title": "Hello World"
+        "command": "versionUpdater.bumpPatch",
+        "title": "Bump Patch Version",
+        "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.bumpMinor",
+        "title": "Bump Minor Version",
+        "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.bumpMajor",
+        "title": "Bump Major Version",
+        "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.bumpAllPatch",
+        "title": "Bump All Versions (Patch)",
+        "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.bumpAllMinor",
+        "title": "Bump All Versions (Minor)",
+        "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.bumpAllMajor",
+        "title": "Bump All Versions (Major)",
+        "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.scanDocument",
+        "title": "Scan Document for Versions",
+        "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.refresh",
+        "title": "Refresh Configuration",
+        "category": "Version Updater"
+      }
+    ],
+    "configuration": {
+      "title": "Version Updater",
+      "properties": {
+        "versionUpdater.patterns": {
+          "type": "array",
+          "default": [
+            "(?:@version|version:|v|Version)\\s*(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)",
+            "(?:^|\\s)v?(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)(?:\\s|$)"
+          ],
+          "description": "Regex patterns to detect version strings. The first capture group should match the version.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "versionUpdater.autoUpdateOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically increment patch version on save"
+        },
+        "versionUpdater.showCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show CodeLens actions above version strings"
+        },
+        "versionUpdater.showDecorations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight version strings in the editor"
+        },
+        "versionUpdater.decorationColor": {
+          "type": "string",
+          "default": "rgba(100, 200, 100, 0.3)",
+          "description": "Background color for version string highlights"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "versionUpdater.bumpPatch",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "versionUpdater.bumpMinor",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "versionUpdater.bumpMajor",
+        "key": "ctrl+alt+j",
+        "mac": "cmd+alt+j",
+        "when": "editorTextFocus"
       }
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && node esbuild.config.mjs",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.config.mjs --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && node esbuild.config.mjs --production",
+    "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "test": "vscode-test",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "pretest": "npm run compile",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@types/vscode": "^1.105.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
+    "@types/node": "^22.x",
+    "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
-    "eslint": "^9.36.0",
-    "typescript": "^5.9.3",
+    "@vitest/coverage-v8": "^2.0.0",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.4.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.0.0"
   }
 }
