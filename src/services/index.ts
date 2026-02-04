@@ -1,0 +1,1 @@
+export { VersionScanner } from './versionScanner';
