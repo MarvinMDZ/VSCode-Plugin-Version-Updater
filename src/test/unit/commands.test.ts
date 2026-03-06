@@ -40,6 +40,7 @@ describe('createBumpVersionCommand', () => {
       document: {
         getText: () => '// @version 1.2.3',
         uri: { toString: () => 'file:///test.ts' },
+        fileName: 'test.ts',
         version: 1,
       } as unknown as vscode.TextDocument,
       selection: {
@@ -138,6 +139,7 @@ describe('createBumpAllVersionsCommand', () => {
       document: {
         getText: () => '// @version 1.2.3\n// @version 2.0.0',
         uri: { toString: () => 'file:///test.ts' },
+        fileName: 'test.ts',
         version: 1,
       } as unknown as vscode.TextDocument,
       edit: vi.fn().mockResolvedValue(true),
@@ -219,15 +221,16 @@ describe('createBumpAllVersionsCommand', () => {
 
 describe('createBumpAtRangeCommand', () => {
   let mockEditor: {
-    document: { uri: { toString: () => string } };
+    document: { uri: { toString: () => string }; fileName: string };
     edit: ReturnType<typeof vi.fn>;
   };
+  const mockScanner = { getConfig: () => ({ fileHeader: false }) } as unknown as VersionScanner;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     mockEditor = {
-      document: { uri: { toString: () => 'file:///test.ts' } },
+      document: { uri: { toString: () => 'file:///test.ts' }, fileName: 'test.ts' },
       edit: vi.fn().mockResolvedValue(true),
     };
 
@@ -247,7 +250,7 @@ describe('createBumpAtRangeCommand', () => {
     const uri = { toString: () => 'file:///test.ts' } as vscode.Uri;
     const range = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 5));
 
-    const command = createBumpAtRangeCommand('patch');
+    const command = createBumpAtRangeCommand('patch', mockScanner);
     await command(uri, range, '1.2.3');
 
     expect(mockEditor.edit).toHaveBeenCalled();
@@ -260,7 +263,7 @@ describe('createBumpAtRangeCommand', () => {
     const uri = { toString: () => 'file:///test.ts' } as vscode.Uri;
     const range = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 5));
 
-    const command = createBumpAtRangeCommand('patch');
+    const command = createBumpAtRangeCommand('patch', mockScanner);
     await command(uri, range, 'invalid');
 
     expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Invalid version: invalid');
@@ -271,7 +274,7 @@ describe('createBumpAtRangeCommand', () => {
     const uri = { toString: () => 'file:///test.ts' } as vscode.Uri;
     const range = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 5));
 
-    const command = createBumpAtRangeCommand('minor');
+    const command = createBumpAtRangeCommand('minor', mockScanner);
     await command(uri, range, '1.2.3');
 
     expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
@@ -283,7 +286,7 @@ describe('createBumpAtRangeCommand', () => {
     const uri = { toString: () => 'file:///test.ts' } as vscode.Uri;
     const range = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 5));
 
-    const command = createBumpAtRangeCommand('major');
+    const command = createBumpAtRangeCommand('major', mockScanner);
     await command(uri, range, '1.2.3');
 
     expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
@@ -303,7 +306,7 @@ describe('createBumpAtRangeCommand', () => {
     const uri = { toString: () => 'file:///test.ts' } as vscode.Uri;
     const range = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 5));
 
-    const command = createBumpAtRangeCommand('patch');
+    const command = createBumpAtRangeCommand('patch', mockScanner);
     await command(uri, range, '1.2.3');
 
     expect(vscode.workspace.openTextDocument).toHaveBeenCalledWith(uri);

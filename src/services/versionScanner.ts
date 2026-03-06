@@ -42,6 +42,8 @@ export class VersionScanner {
         config.get<boolean>('preservePrerelease') ?? DEFAULT_CONFIG.preservePrerelease,
       notificationMode:
         config.get<NotificationMode>('notificationMode') ?? DEFAULT_CONFIG.notificationMode,
+      fileHeader: config.get<boolean>('fileHeader') ?? DEFAULT_CONFIG.fileHeader,
+      fileHeaderEmail: config.get<string>('fileHeaderEmail') ?? DEFAULT_CONFIG.fileHeaderEmail,
     };
   }
 

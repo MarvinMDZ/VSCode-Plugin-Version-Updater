@@ -23,6 +23,8 @@ export interface ExtensionConfig {
   decorationColor: string;
   preservePrerelease: boolean;
   notificationMode: NotificationMode;
+  fileHeader: boolean;
+  fileHeaderEmail: string;
 }
 
 export const DEFAULT_CONFIG: ExtensionConfig = {
@@ -36,4 +38,6 @@ export const DEFAULT_CONFIG: ExtensionConfig = {
   decorationColor: 'rgba(100, 200, 100, 0.3)',
   preservePrerelease: false,
   notificationMode: 'default',
+  fileHeader: true,
+  fileHeaderEmail: '',
 };

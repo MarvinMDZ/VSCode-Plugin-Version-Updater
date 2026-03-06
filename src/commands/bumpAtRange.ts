@@ -1,17 +1,20 @@
 import * as vscode from 'vscode';
 import { bumpVersion, parseVersion } from '../utils/version';
 import { showInfo } from '../utils/notifications';
+import { buildFileHeaderEdits } from '../utils/fileHeader';
 import { recordBump } from './undoBump';
 import { VersionBumpType, VersionMatch } from '../types';
+import { VersionScanner } from '../services/versionScanner';
 
 export function createBumpAtRangeCommand(
-  type: VersionBumpType
+  type: VersionBumpType,
+  scanner: VersionScanner
 ): (uri: vscode.Uri, range: vscode.Range, version: string) => Promise<void> {
   return async (uri: vscode.Uri, range: vscode.Range, version: string) => {
     const activeEditor = vscode.window.activeTextEditor;
     let editor: vscode.TextEditor;
 
-    if (activeEditor && activeEditor.document.uri.toString() === uri.toString()) {
+    if (activeEditor?.document.uri.toString() === uri.toString()) {
       editor = activeEditor;
     } else {
       const document = await vscode.workspace.openTextDocument(uri);
@@ -39,9 +42,21 @@ export function createBumpAtRangeCommand(
     }
 
     const newVersion = bumpVersion(match, type);
+    const headerEdits = await buildFileHeaderEdits(
+      editor.document,
+      newVersion,
+      scanner.getConfig()
+    );
 
     await editor.edit((editBuilder) => {
       editBuilder.replace(range, newVersion);
+      for (const headerEdit of headerEdits) {
+        if (headerEdit.newText.endsWith('\n') && headerEdit.range.isEmpty) {
+          editBuilder.insert(headerEdit.range.start, headerEdit.newText);
+        } else {
+          editBuilder.replace(headerEdit.range, headerEdit.newText);
+        }
+      }
     });
 
     recordBump(uri, range, version, newVersion);

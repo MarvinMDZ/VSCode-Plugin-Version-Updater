@@ -82,6 +82,8 @@ describe('VersionCodeLensProvider', () => {
       decorationColor: 'rgba(100, 200, 100, 0.3)',
       preservePrerelease: false,
       notificationMode: 'default' as const,
+      fileHeader: true,
+      fileHeaderEmail: '',
     });
 
     const doc = createMockDocument();
@@ -168,6 +170,8 @@ describe('VersionDecorationProvider', () => {
       decorationColor: 'rgba(100, 200, 100, 0.3)',
       preservePrerelease: false,
       notificationMode: 'default' as const,
+      fileHeader: true,
+      fileHeaderEmail: '',
     });
 
     const provider = new VersionDecorationProvider(scanner);

@@ -133,6 +133,16 @@
           ],
           "default": "default",
           "description": "How to display bump notifications: 'default' (popup), 'silent' (no notifications), 'statusBar' (status bar message)"
+        },
+        "versionUpdater.fileHeader": {
+          "type": "boolean",
+          "default": true,
+          "description": "Insert or update a file header (Version, Last editor, Date) when bumping versions"
+        },
+        "versionUpdater.fileHeaderEmail": {
+          "type": "string",
+          "default": "",
+          "description": "Email address for the file header. Falls back to git config user.email if empty."
         }
       }
     },

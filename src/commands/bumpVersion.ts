@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { VersionScanner } from '../services/versionScanner';
 import { bumpVersion } from '../utils/version';
 import { showInfo } from '../utils/notifications';
+import { buildFileHeaderEdits } from '../utils/fileHeader';
 import { recordBump } from './undoBump';
 import { VersionBumpType, VersionMatch } from '../types';
 
@@ -53,9 +54,17 @@ export function createBumpVersionCommand(
     }
 
     const newVersion = bumpVersion(targetMatch, type);
+    const headerEdits = await buildFileHeaderEdits(document, newVersion, scanner.getConfig());
 
     await editor.edit((editBuilder) => {
       editBuilder.replace(targetMatch.range, newVersion);
+      for (const headerEdit of headerEdits) {
+        if (headerEdit.newText.endsWith('\n') && headerEdit.range.isEmpty) {
+          editBuilder.insert(headerEdit.range.start, headerEdit.newText);
+        } else {
+          editBuilder.replace(headerEdit.range, headerEdit.newText);
+        }
+      }
     });
 
     recordBump(document.uri, targetMatch.range, targetMatch.version, newVersion);
@@ -96,10 +105,23 @@ export function createBumpAllVersionsCommand(
     // Sort by position descending to avoid range shifts
     const sortedMatches = [...matches].sort((a, b) => b.range.start.compareTo(a.range.start));
 
+    const firstMatch = matches[0];
+    const firstNewVersion = firstMatch ? bumpVersion(firstMatch, type) : undefined;
+    const headerEdits = firstNewVersion
+      ? await buildFileHeaderEdits(document, firstNewVersion, scanner.getConfig())
+      : [];
+
     await editor.edit((editBuilder) => {
       for (const match of sortedMatches) {
         const newVersion = bumpVersion(match, type);
         editBuilder.replace(match.range, newVersion);
+      }
+      for (const headerEdit of headerEdits) {
+        if (headerEdit.newText.endsWith('\n') && headerEdit.range.isEmpty) {
+          editBuilder.insert(headerEdit.range.start, headerEdit.newText);
+        } else {
+          editBuilder.replace(headerEdit.range, headerEdit.newText);
+        }
       }
     });
 

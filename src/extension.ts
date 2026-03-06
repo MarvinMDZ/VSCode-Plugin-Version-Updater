@@ -9,6 +9,7 @@ import {
   createUndoBumpCommand,
 } from './commands';
 import { bumpVersion } from './utils/version';
+import { buildFileHeaderEdits, clearGitEmailCache } from './utils/fileHeader';
 
 let decorationProvider: VersionDecorationProvider | undefined;
 let scannerInstance: VersionScanner | undefined;
@@ -17,6 +18,12 @@ export function activate(context: vscode.ExtensionContext): void {
   const scanner = new VersionScanner();
   scannerInstance = scanner;
   context.subscriptions.push({ dispose: () => scanner.dispose() });
+
+  // Invalidate git email cache when workspace folders or config changes
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => clearGitEmailCache()),
+    scanner.onDidChangeConfig(() => clearGitEmailCache())
+  );
 
   // Register CodeLens provider
   const codeLensProvider = new VersionCodeLensProvider(scanner);
@@ -66,15 +73,15 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'versionUpdater.bumpPatchAtRange',
-      createBumpAtRangeCommand('patch')
+      createBumpAtRangeCommand('patch', scanner)
     ),
     vscode.commands.registerCommand(
       'versionUpdater.bumpMinorAtRange',
-      createBumpAtRangeCommand('minor')
+      createBumpAtRangeCommand('minor', scanner)
     ),
     vscode.commands.registerCommand(
       'versionUpdater.bumpMajorAtRange',
-      createBumpAtRangeCommand('major')
+      createBumpAtRangeCommand('major', scanner)
     )
   );
 
@@ -94,13 +101,22 @@ export function activate(context: vscode.ExtensionContext): void {
 
       const sortedMatches = [...matches].sort((a, b) => b.range.start.compareTo(a.range.start));
 
+      const versionEdits = sortedMatches.map((match) => {
+        const newVersion = bumpVersion(match, 'patch');
+        return vscode.TextEdit.replace(match.range, newVersion);
+      });
+
+      const firstMatch = matches[0];
+      const firstNewVersion = firstMatch ? bumpVersion(firstMatch, 'patch') : undefined;
+
       event.waitUntil(
-        Promise.resolve(
-          sortedMatches.map((match) => {
-            const newVersion = bumpVersion(match, 'patch');
-            return vscode.TextEdit.replace(match.range, newVersion);
-          })
-        )
+        (async (): Promise<vscode.TextEdit[]> => {
+          if (firstNewVersion) {
+            const headerEdits = await buildFileHeaderEdits(document, firstNewVersion, config);
+            return [...headerEdits, ...versionEdits];
+          }
+          return versionEdits;
+        })()
       );
     })
   );

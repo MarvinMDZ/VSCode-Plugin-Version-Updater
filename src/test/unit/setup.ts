@@ -52,6 +52,10 @@ vi.mock('vscode', () => ({
   },
   TextEdit: {
     replace: vi.fn((range: unknown, newText: string) => ({ range, newText })),
+    insert: vi.fn((position: unknown, newText: string) => ({
+      range: { start: position, end: position, isEmpty: true },
+      newText,
+    })),
   },
   StatusBarAlignment: {
     Left: 1,
@@ -71,6 +75,8 @@ vi.mock('vscode', () => ({
           decorationColor: 'rgba(100, 200, 100, 0.3)',
           preservePrerelease: false,
           notificationMode: 'default',
+          fileHeader: true,
+          fileHeaderEmail: '',
         };
         return defaults[key];
       }),
