@@ -1,6 +1,22 @@
 import * as vscode from 'vscode';
 import { VersionScanner } from '../services/versionScanner';
 import { bumpVersion } from '../utils/version';
+import { VersionMatch, VersionBumpType } from '../types';
+
+interface VersionCodeLensData {
+  uri: vscode.Uri;
+  match: VersionMatch;
+  type: VersionBumpType;
+}
+
+class VersionCodeLens extends vscode.CodeLens {
+  constructor(
+    range: vscode.Range,
+    public readonly data: VersionCodeLensData
+  ) {
+    super(range);
+  }
+}
 
 export class VersionCodeLensProvider implements vscode.CodeLensProvider {
   private scanner: VersionScanner;
@@ -10,11 +26,8 @@ export class VersionCodeLensProvider implements vscode.CodeLensProvider {
   constructor(scanner: VersionScanner) {
     this.scanner = scanner;
 
-    vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('versionUpdater')) {
-        this.scanner.refreshConfig();
-        this._onDidChangeCodeLenses.fire();
-      }
+    scanner.onDidChangeConfig(() => {
+      this._onDidChangeCodeLenses.fire();
     });
   }
 
@@ -33,39 +46,41 @@ export class VersionCodeLensProvider implements vscode.CodeLensProvider {
 
     const matches = this.scanner.scanDocument(document);
     const codeLenses: vscode.CodeLens[] = [];
+    const types: VersionBumpType[] = ['patch', 'minor', 'major'];
 
     for (const match of matches) {
-      // Bump patch
-      codeLenses.push(
-        new vscode.CodeLens(match.range, {
-          title: `↑ ${bumpVersion(match, 'patch')}`,
-          command: 'versionUpdater.bumpPatchAtRange',
-          arguments: [document.uri, match.range, match.version],
-          tooltip: 'Bump patch version',
-        })
-      );
-
-      // Bump minor
-      codeLenses.push(
-        new vscode.CodeLens(match.range, {
-          title: `↑↑ ${bumpVersion(match, 'minor')}`,
-          command: 'versionUpdater.bumpMinorAtRange',
-          arguments: [document.uri, match.range, match.version],
-          tooltip: 'Bump minor version',
-        })
-      );
-
-      // Bump major
-      codeLenses.push(
-        new vscode.CodeLens(match.range, {
-          title: `↑↑↑ ${bumpVersion(match, 'major')}`,
-          command: 'versionUpdater.bumpMajorAtRange',
-          arguments: [document.uri, match.range, match.version],
-          tooltip: 'Bump major version',
-        })
-      );
+      for (const type of types) {
+        codeLenses.push(new VersionCodeLens(match.range, { uri: document.uri, match, type }));
+      }
     }
 
     return codeLenses;
+  }
+
+  public resolveCodeLens(
+    codeLens: vscode.CodeLens,
+    _token: vscode.CancellationToken
+  ): vscode.CodeLens {
+    if (!(codeLens instanceof VersionCodeLens)) {
+      return codeLens;
+    }
+
+    const { uri, match, type } = codeLens.data;
+    const arrows = type === 'patch' ? '↑' : type === 'minor' ? '↑↑' : '↑↑↑';
+    const commandId =
+      type === 'patch'
+        ? 'versionUpdater.bumpPatchAtRange'
+        : type === 'minor'
+          ? 'versionUpdater.bumpMinorAtRange'
+          : 'versionUpdater.bumpMajorAtRange';
+
+    codeLens.command = {
+      title: `${arrows} ${bumpVersion(match, type)}`,
+      command: commandId,
+      arguments: [uri, match.range, match.version],
+      tooltip: `Bump ${type} version`,
+    };
+
+    return codeLens;
   }
 }

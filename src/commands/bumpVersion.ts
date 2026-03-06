@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { VersionScanner } from '../services/versionScanner';
 import { bumpVersion } from '../utils/version';
+import { showInfo } from '../utils/notifications';
+import { recordBump } from './undoBump';
 import { VersionBumpType, VersionMatch } from '../types';
 
 export function createBumpVersionCommand(
@@ -26,7 +28,7 @@ export function createBumpVersionCommand(
     // Find version at cursor or let user pick
     let targetMatch: VersionMatch | undefined;
 
-    if (!selection.isEmpty || selection.active) {
+    if (!selection.isEmpty) {
       targetMatch = matches.find((match) => match.range.contains(selection.active));
     }
 
@@ -56,7 +58,8 @@ export function createBumpVersionCommand(
       editBuilder.replace(targetMatch.range, newVersion);
     });
 
-    vscode.window.showInformationMessage(`Version updated: ${targetMatch.version} → ${newVersion}`);
+    recordBump(document.uri, targetMatch.range, targetMatch.version, newVersion);
+    showInfo(`Version updated: ${targetMatch.version} → ${newVersion}`);
   };
 }
 
@@ -100,6 +103,6 @@ export function createBumpAllVersionsCommand(
       }
     });
 
-    vscode.window.showInformationMessage(`Updated ${matches.length} version(s) to ${type}`);
+    showInfo(`Updated ${matches.length} version(s) to ${type}`);
   };
 }

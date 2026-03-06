@@ -84,6 +84,12 @@ describe('parseVersion', () => {
       patch: 300,
     });
   });
+
+  it('should return null for version with build metadata', () => {
+    // Current implementation does not support build metadata (1.2.3+build.1)
+    const result = parseVersion('1.2.3+build.1');
+    expect(result).toBeNull();
+  });
 });
 
 describe('bumpVersion', () => {
@@ -113,6 +119,33 @@ describe('bumpVersion', () => {
     const match = createVersionMatch('1.2.9');
     expect(bumpVersion(match, 'patch')).toBe('1.2.10');
   });
+
+  it('should strip prerelease suffix on patch bump', () => {
+    const match = createVersionMatch('1.2.3-beta.1');
+    expect(bumpVersion(match, 'patch')).toBe('1.2.4');
+  });
+
+  it('should strip prerelease suffix on minor bump', () => {
+    const match = createVersionMatch('1.2.3-alpha');
+    expect(bumpVersion(match, 'minor')).toBe('1.3.0');
+  });
+
+  it('should strip prerelease suffix on major bump', () => {
+    const match = createVersionMatch('1.2.3-rc.1');
+    expect(bumpVersion(match, 'major')).toBe('2.0.0');
+  });
+
+  it('should preserve prerelease when preservePrerelease is true', () => {
+    const match = createVersionMatch('1.2.3-beta.1');
+    expect(bumpVersion(match, 'patch', true)).toBe('1.2.4-beta.1');
+    expect(bumpVersion(match, 'minor', true)).toBe('1.3.0-beta.1');
+    expect(bumpVersion(match, 'major', true)).toBe('2.0.0-beta.1');
+  });
+
+  it('should not add prerelease when version has none even with preservePrerelease', () => {
+    const match = createVersionMatch('1.2.3');
+    expect(bumpVersion(match, 'patch', true)).toBe('1.2.4');
+  });
 });
 
 describe('compareVersions', () => {
@@ -141,6 +174,12 @@ describe('compareVersions', () => {
   it('should return 0 for invalid versions', () => {
     expect(compareVersions('invalid', '1.2.3')).toBe(0);
     expect(compareVersions('1.2.3', 'invalid')).toBe(0);
+  });
+
+  it('should compare versions ignoring prerelease (compares numeric parts only)', () => {
+    // compareVersions only compares major.minor.patch, not prerelease
+    expect(compareVersions('1.2.3-alpha', '1.2.3')).toBe(0);
+    expect(compareVersions('1.2.3-beta', '1.2.3-alpha')).toBe(0);
   });
 });
 

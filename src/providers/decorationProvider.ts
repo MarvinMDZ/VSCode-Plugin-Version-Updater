@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { VersionScanner } from '../services/versionScanner';
+import { bumpVersion } from '../utils/version';
 
 export class VersionDecorationProvider {
   private scanner: VersionScanner;
@@ -22,15 +23,12 @@ export class VersionDecorationProvider {
           this.updateDecorations(editor);
         }
       }),
-      vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration('versionUpdater')) {
-          this.scanner.refreshConfig();
-          this.decorationType.dispose();
-          this.decorationType = this.createDecorationType();
-          const editor = vscode.window.activeTextEditor;
-          if (editor) {
-            this.updateDecorations(editor);
-          }
+      scanner.onDidChangeConfig(() => {
+        this.decorationType.dispose();
+        this.decorationType = this.createDecorationType();
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+          this.updateDecorations(editor);
         }
       })
     );
@@ -64,9 +62,9 @@ export class VersionDecorationProvider {
       range: match.range,
       hoverMessage: new vscode.MarkdownString(
         `**Version:** \`${match.version}\`\n\n` +
-          `- Patch: \`${match.major}.${match.minor}.${match.patch + 1}\`\n` +
-          `- Minor: \`${match.major}.${match.minor + 1}.0\`\n` +
-          `- Major: \`${match.major + 1}.0.0\``
+          `- 🟢 Patch: \`${bumpVersion(match, 'patch')}\`\n` +
+          `- 🟡 Minor: \`${bumpVersion(match, 'minor')}\`\n` +
+          `- 🔴 Major: \`${bumpVersion(match, 'major')}\``
       ),
     }));
 

@@ -1,16 +1,22 @@
 import * as vscode from 'vscode';
 import { VersionScanner } from './services';
-import { VersionCodeLensProvider, VersionDecorationProvider } from './providers';
+import { VersionCodeLensProvider, VersionDecorationProvider, StatusBarProvider } from './providers';
 import {
   createBumpVersionCommand,
   createBumpAllVersionsCommand,
   createBumpAtRangeCommand,
+  createWorkspaceScanCommand,
+  createUndoBumpCommand,
 } from './commands';
+import { bumpVersion } from './utils/version';
 
 let decorationProvider: VersionDecorationProvider | undefined;
+let scannerInstance: VersionScanner | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   const scanner = new VersionScanner();
+  scannerInstance = scanner;
+  context.subscriptions.push({ dispose: () => scanner.dispose() });
 
   // Register CodeLens provider
   const codeLensProvider = new VersionCodeLensProvider(scanner);
@@ -72,6 +78,37 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
+  // Auto-update on save
+  context.subscriptions.push(
+    vscode.workspace.onWillSaveTextDocument((event) => {
+      const config = scanner.getConfig();
+      if (!config.autoUpdateOnSave) {
+        return;
+      }
+
+      const document = event.document;
+      const matches = scanner.scanDocument(document);
+      if (matches.length === 0) {
+        return;
+      }
+
+      const sortedMatches = [...matches].sort((a, b) => b.range.start.compareTo(a.range.start));
+
+      event.waitUntil(
+        Promise.resolve(
+          sortedMatches.map((match) => {
+            const newVersion = bumpVersion(match, 'patch');
+            return vscode.TextEdit.replace(match.range, newVersion);
+          })
+        )
+      );
+    })
+  );
+
+  // Status bar
+  const statusBarProviderInstance = new StatusBarProvider(scanner);
+  context.subscriptions.push(statusBarProviderInstance);
+
   // Register refresh command
   context.subscriptions.push(
     vscode.commands.registerCommand('versionUpdater.refresh', () => {
@@ -100,10 +137,11 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
 
-      const items = matches.map((match) => ({
+      const items = matches.map((match, index) => ({
         label: match.version,
         description: `Line ${match.line + 1}`,
         detail: `${match.major}.${match.minor}.${match.patch}${match.prerelease ? `-${match.prerelease}` : ''}`,
+        index,
       }));
 
       const selected = await vscode.window.showQuickPick(items, {
@@ -112,7 +150,7 @@ export function activate(context: vscode.ExtensionContext): void {
       });
 
       if (selected) {
-        const match = matches.find((m) => m.version === selected.label);
+        const match = matches[selected.index];
         if (match) {
           editor.selection = new vscode.Selection(match.range.start, match.range.end);
           editor.revealRange(match.range, vscode.TextEditorRevealType.InCenter);
@@ -120,8 +158,22 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     })
   );
+
+  // Register undo bump command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('versionUpdater.undoBump', createUndoBumpCommand())
+  );
+
+  // Register workspace scan command
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'versionUpdater.scanWorkspace',
+      createWorkspaceScanCommand(scanner)
+    )
+  );
 }
 
 export function deactivate(): void {
   decorationProvider?.dispose();
+  scannerInstance?.dispose();
 }

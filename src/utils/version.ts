@@ -30,7 +30,11 @@ export function parseVersion(versionString: string): {
   return result;
 }
 
-export function bumpVersion(version: VersionMatch, type: VersionBumpType): string {
+export function bumpVersion(
+  version: VersionMatch,
+  type: VersionBumpType,
+  preservePrerelease = false
+): string {
   let { major, minor, patch } = version;
 
   switch (type) {
@@ -48,7 +52,13 @@ export function bumpVersion(version: VersionMatch, type: VersionBumpType): strin
       break;
   }
 
-  return `${major}.${minor}.${patch}`;
+  const base = `${major}.${minor}.${patch}`;
+
+  if (preservePrerelease && version.prerelease) {
+    return `${base}-${version.prerelease}`;
+  }
+
+  return base;
 }
 
 export function compareVersions(a: string, b: string): number {

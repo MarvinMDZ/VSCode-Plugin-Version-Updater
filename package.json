@@ -73,6 +73,16 @@
         "command": "versionUpdater.refresh",
         "title": "Refresh Configuration",
         "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.scanWorkspace",
+        "title": "Scan Workspace for Versions",
+        "category": "Version Updater"
+      },
+      {
+        "command": "versionUpdater.undoBump",
+        "title": "Undo Last Version Bump",
+        "category": "Version Updater"
       }
     ],
     "configuration": {
@@ -108,6 +118,21 @@
           "type": "string",
           "default": "rgba(100, 200, 100, 0.3)",
           "description": "Background color for version string highlights"
+        },
+        "versionUpdater.preservePrerelease": {
+          "type": "boolean",
+          "default": false,
+          "description": "Preserve prerelease suffix when bumping versions (e.g., 1.2.3-beta.1 → 1.2.4-beta.1)"
+        },
+        "versionUpdater.notificationMode": {
+          "type": "string",
+          "enum": [
+            "default",
+            "silent",
+            "statusBar"
+          ],
+          "default": "default",
+          "description": "How to display bump notifications: 'default' (popup), 'silent' (no notifications), 'statusBar' (status bar message)"
         }
       }
     },

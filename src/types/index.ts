@@ -11,13 +11,9 @@ export interface VersionMatch {
   fullMatch: string;
 }
 
-export interface VersionUpdateResult {
-  oldVersion: string;
-  newVersion: string;
-  range: vscode.Range;
-}
-
 export type VersionBumpType = 'major' | 'minor' | 'patch';
+
+export type NotificationMode = 'default' | 'silent' | 'statusBar';
 
 export interface ExtensionConfig {
   patterns: string[];
@@ -25,6 +21,8 @@ export interface ExtensionConfig {
   showCodeLens: boolean;
   showDecorations: boolean;
   decorationColor: string;
+  preservePrerelease: boolean;
+  notificationMode: NotificationMode;
 }
 
 export const DEFAULT_CONFIG: ExtensionConfig = {
@@ -36,4 +34,6 @@ export const DEFAULT_CONFIG: ExtensionConfig = {
   showCodeLens: true,
   showDecorations: true,
   decorationColor: 'rgba(100, 200, 100, 0.3)',
+  preservePrerelease: false,
+  notificationMode: 'default',
 };

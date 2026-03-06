@@ -1,13 +1,22 @@
 import * as vscode from 'vscode';
 import { bumpVersion, parseVersion } from '../utils/version';
+import { showInfo } from '../utils/notifications';
+import { recordBump } from './undoBump';
 import { VersionBumpType, VersionMatch } from '../types';
 
 export function createBumpAtRangeCommand(
   type: VersionBumpType
 ): (uri: vscode.Uri, range: vscode.Range, version: string) => Promise<void> {
   return async (uri: vscode.Uri, range: vscode.Range, version: string) => {
-    const document = await vscode.workspace.openTextDocument(uri);
-    const editor = await vscode.window.showTextDocument(document);
+    const activeEditor = vscode.window.activeTextEditor;
+    let editor: vscode.TextEditor;
+
+    if (activeEditor && activeEditor.document.uri.toString() === uri.toString()) {
+      editor = activeEditor;
+    } else {
+      const document = await vscode.workspace.openTextDocument(uri);
+      editor = await vscode.window.showTextDocument(document);
+    }
 
     const parsed = parseVersion(version);
     if (!parsed) {
@@ -35,6 +44,7 @@ export function createBumpAtRangeCommand(
       editBuilder.replace(range, newVersion);
     });
 
-    vscode.window.showInformationMessage(`Version updated: ${version} → ${newVersion}`);
+    recordBump(uri, range, version, newVersion);
+    showInfo(`Version updated: ${version} → ${newVersion}`);
   };
 }
