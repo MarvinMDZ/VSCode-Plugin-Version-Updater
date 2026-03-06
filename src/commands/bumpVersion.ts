@@ -56,14 +56,19 @@ export function createBumpVersionCommand(
     const newVersion = bumpVersion(targetMatch, type);
     const headerEdits = await buildFileHeaderEdits(document, newVersion, scanner.getConfig());
 
+    const rangeInHeader = headerEdits.some(
+      (edit) =>
+        !edit.range.isEmpty &&
+        targetMatch.range.start.line >= edit.range.start.line &&
+        targetMatch.range.end.line <= edit.range.end.line
+    );
+
     await editor.edit((editBuilder) => {
-      editBuilder.replace(targetMatch.range, newVersion);
+      if (!rangeInHeader) {
+        editBuilder.replace(targetMatch.range, newVersion);
+      }
       for (const headerEdit of headerEdits) {
-        if (headerEdit.newText.endsWith('\n') && headerEdit.range.isEmpty) {
-          editBuilder.insert(headerEdit.range.start, headerEdit.newText);
-        } else {
-          editBuilder.replace(headerEdit.range, headerEdit.newText);
-        }
+        editBuilder.replace(headerEdit.range, headerEdit.newText);
       }
     });
 
@@ -113,15 +118,19 @@ export function createBumpAllVersionsCommand(
 
     await editor.edit((editBuilder) => {
       for (const match of sortedMatches) {
-        const newVersion = bumpVersion(match, type);
-        editBuilder.replace(match.range, newVersion);
+        const matchNewVersion = bumpVersion(match, type);
+        const inHeader = headerEdits.some(
+          (edit) =>
+            !edit.range.isEmpty &&
+            match.range.start.line >= edit.range.start.line &&
+            match.range.end.line <= edit.range.end.line
+        );
+        if (!inHeader) {
+          editBuilder.replace(match.range, matchNewVersion);
+        }
       }
       for (const headerEdit of headerEdits) {
-        if (headerEdit.newText.endsWith('\n') && headerEdit.range.isEmpty) {
-          editBuilder.insert(headerEdit.range.start, headerEdit.newText);
-        } else {
-          editBuilder.replace(headerEdit.range, headerEdit.newText);
-        }
+        editBuilder.replace(headerEdit.range, headerEdit.newText);
       }
     });
 

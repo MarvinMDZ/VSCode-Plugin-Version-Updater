@@ -48,14 +48,21 @@ export function createBumpAtRangeCommand(
       scanner.getConfig()
     );
 
+    // Skip individual version bump if it falls inside the header replace range
+    // (overlapping edits in editor.edit() are rejected by VS Code)
+    const rangeInHeader = headerEdits.some(
+      (edit) =>
+        !edit.range.isEmpty &&
+        range.start.line >= edit.range.start.line &&
+        range.end.line <= edit.range.end.line
+    );
+
     await editor.edit((editBuilder) => {
-      editBuilder.replace(range, newVersion);
+      if (!rangeInHeader) {
+        editBuilder.replace(range, newVersion);
+      }
       for (const headerEdit of headerEdits) {
-        if (headerEdit.newText.endsWith('\n') && headerEdit.range.isEmpty) {
-          editBuilder.insert(headerEdit.range.start, headerEdit.newText);
-        } else {
-          editBuilder.replace(headerEdit.range, headerEdit.newText);
-        }
+        editBuilder.replace(headerEdit.range, headerEdit.newText);
       }
     });
 

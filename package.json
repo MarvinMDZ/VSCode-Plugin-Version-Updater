@@ -2,7 +2,7 @@
   "name": "version-updater-comment",
   "displayName": "Version Updater",
   "description": "Detect and bump version strings in your code comments and files",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "publisher": "MarvinMDZ",
   "repository": {
     "type": "git",

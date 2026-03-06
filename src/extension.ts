@@ -113,7 +113,18 @@ export function activate(context: vscode.ExtensionContext): void {
         (async (): Promise<vscode.TextEdit[]> => {
           if (firstNewVersion) {
             const headerEdits = await buildFileHeaderEdits(document, firstNewVersion, config);
-            return [...headerEdits, ...versionEdits];
+            // Filter out version edits that overlap with the header replace range
+            // to avoid VS Code rejecting the entire edit batch
+            const filteredVersionEdits = versionEdits.filter(
+              (vEdit) =>
+                !headerEdits.some(
+                  (hEdit) =>
+                    !hEdit.range.isEmpty &&
+                    vEdit.range.start.line >= hEdit.range.start.line &&
+                    vEdit.range.end.line <= hEdit.range.end.line
+                )
+            );
+            return [...headerEdits, ...filteredVersionEdits];
           }
           return versionEdits;
         })()
