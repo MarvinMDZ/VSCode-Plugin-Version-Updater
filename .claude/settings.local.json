@@ -1,5 +1,14 @@
 {
   "permissions": {
-    "allow": ["Bash(tree:*)", "Bash(du:*)"]
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(du:*)",
+      "Bash(cd:*)",
+      "Bash(cd /c/Users/javie/Documents/Git/VSCode-Plugin-Version-Updater && npx lint-staged --version 2>&1)",
+      "Bash(cd /c/Users/javie/Documents/Git/VSCode-Plugin-Version-Updater && git refs 2>&1 || git show-ref refs/stash 2>&1)",
+      "Bash(cd /c/Users/javie/Documents/Git/VSCode-Plugin-Version-Updater && npx prettier --write package.json package-lock.json 2>&1)",
+      "Bash(cd /c/Users/javie/Documents/Git/VSCode-Plugin-Version-Updater && git push && git stash pop 2>&1)",
+      "Bash(cd /c/Users/javie/Documents/Git/VSCode-Plugin-Version-Updater && git stash drop 2>&1)"
+    ]
   }
 }
